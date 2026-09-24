@@ -1,0 +1,103 @@
+name: Hatcher macOS console release
+
+on:
+  push:
+    tags:
+      - '1.6.616-hatcher.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Fork version (1.6.616-hatcher.N)'
+        required: true
+        default: '1.6.616-hatcher.1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hatcher-macos-${{ inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: osx-arm64
+          - runner: macos-15-intel
+            target: osx-x64
+    runs-on: ${{ matrix.runner }}
+    env:
+      FORK_VERSION: ${{ inputs.version || github.ref_name }}
+      TARGET: ${{ matrix.target }}
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Check fork version
+        shell: bash
+        run: '[[ "$FORK_VERSION" =~ ^1\.6\.616-hatcher\.[1-9][0-9]*$ ]]'
+      - name: Test core and console
+        shell: bash
+        run: |
+          dotnet test src/Hst.Imager.Core.Tests --configuration Release
+          dotnet test src/Hst.Imager.ConsoleApp.Tests --configuration Release
+      - name: Package console
+        shell: bash
+        run: bash src/publish-hatcher-macos.sh "$TARGET" "$FORK_VERSION" "$RUNNER_TEMP/release"
+      - name: Check packaged console
+        shell: bash
+        run: |
+          mkdir "$RUNNER_TEMP/check"
+          unzip -q "$RUNNER_TEMP"/release/*.zip -d "$RUNNER_TEMP/check"
+          "$RUNNER_TEMP/check/hst.imager" --version
+          cd "$RUNNER_TEMP/release"
+          shasum -a 256 -c ./*.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hatcher-${{ matrix.target }}
+          path: ${{ runner.temp }}/release/*
+          if-no-files-found: error
+
+  draft-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      FORK_VERSION: ${{ inputs.version || github.ref_name }}
+      SOURCE_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: hatcher-osx-*
+          merge-multiple: true
+          path: release
+      - name: Create draft release
+        shell: bash
+        run: |
+          if gh release view "$FORK_VERSION" >/dev/null 2>&1; then
+            echo "release already exists: $FORK_VERSION" >&2
+            exit 1
+          fi
+          cd release
+          shasum -a 256 -c ./*.sha256
+          cat > "$RUNNER_TEMP/notes.md" <<'NOTES'
+          macOS console fork based on upstream 1.6.616.
+
+          Disk data uses /dev/rdisk; enumeration and mounting keep /dev/disk.
+          Verification still follows each written buffer. See HATCHER.md for
+          SD-card measurements, direct-build checks and remaining test limits.
+
+          SHA-256 files verify the archives. MD5 files supply the hashes used
+          by Emu68 Hatcher's tool downloader. Windows and Linux use upstream.
+          NOTES
+          gh release create "$FORK_VERSION" ./*.zip ./*.sha256 ./*.md5 \
+            --target "$SOURCE_SHA" --title "hst-imager $FORK_VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" --draft --prerelease

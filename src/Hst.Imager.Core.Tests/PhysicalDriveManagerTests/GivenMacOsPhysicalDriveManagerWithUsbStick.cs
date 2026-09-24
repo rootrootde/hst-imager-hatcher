@@ -41,6 +41,19 @@ public class GivenMacOsPhysicalDriveManagerWithUsbStick
         Assert.Equal("SanDisk' Cruzer Fit Media", physicalDrive.Name);
         Assert.Equal("/dev/disk2", physicalDrive.Path);
         Assert.Equal(15682240512, physicalDrive.Size);
+        Assert.Equal(512, Assert.IsType<MacOsPhysicalDrive>(physicalDrive).SectorSize);
+    }
+
+    [Fact]
+    public async Task DeviceSectorSizeComesFromDiskUtil()
+    {
+        var manager = new TestMacOsPhysicalDriveManager(new NullLogger<MacOsPhysicalDriveManager>(),
+            _ => File.ReadAllText(Path.Combine("TestData", "diskutil", "diskutil-external-usb-stick.plist")),
+            disk => File.ReadAllText(Path.Combine("TestData", "diskutil", ResolveDisk(disk)))
+                .Replace("<integer>512</integer>", "<integer>4096</integer>"));
+        var drive = Assert.IsType<MacOsPhysicalDrive>(Assert.Single(await manager.GetPhysicalDrives()));
+        Assert.Equal(4096, drive.SectorSize);
+        Assert.Equal("/dev/disk2", drive.Path);
     }
     
     [Fact]
