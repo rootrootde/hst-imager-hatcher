@@ -42,6 +42,18 @@
             }
         }
 
+        public void Flush()
+        {
+            if (!FlushFileBuffers(safeFileHandle))
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to flush '{path}'");
+            }
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool FlushFileBuffers(SafeFileHandle handle);
+
         // private uint FILE_FLAG_RANDOM_ACCESS = 0x10000000;
 
         public bool IsInvalid()

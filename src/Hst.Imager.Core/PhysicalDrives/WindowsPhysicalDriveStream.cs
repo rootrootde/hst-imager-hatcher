@@ -61,6 +61,10 @@
 
         public override void Flush()
         {
+            if (CanWrite)
+            {
+                win32RawDisk.Flush();
+            }
         }
 
         public override void SetLength(long value) =>

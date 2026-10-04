@@ -180,7 +180,7 @@
                 var timeElapsed = stopwatch.Elapsed;
                 var timeRemaining = size == 0 ? TimeSpan.Zero : TimeHelper.CalculateTimeRemaining(percentComplete, timeElapsed);
                 var timeTotal = size == 0 ? TimeSpan.Zero : timeElapsed + timeRemaining;
-                var bytesPerSecond = Convert.ToInt64(bytesProcessed / timeElapsed.TotalSeconds);
+                var bytesPerSecond = TimeHelper.CalculateBytesPerSecond(bytesProcessed, timeElapsed);
 
                 var srcDecrementStep = srcOffset - bufferSize < sourceOffset ? srcOffset - sourceOffset : bufferSize;
                 var srcIncrementStep = bytesRead;

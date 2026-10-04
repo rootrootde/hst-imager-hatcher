@@ -4,10 +4,6 @@ using Hst.Core.Extensions;
 
 namespace Hst.Imager.Core;
 
-/// <summary>
-/// MacOS physical drive media stream used close and dispose it's stream and
-// mount physical drive when disposed.
-/// </summary>
 public class MacOsMediaStream : MediaStream
 {
     private readonly string path;
@@ -17,33 +13,40 @@ public class MacOsMediaStream : MediaStream
     public MacOsMediaStream(Stream stream, string path, long size) : base(stream, size)
     {
         this.path = path;
-        this.isDisposed = false;
     }
+
+    protected virtual void MountDisk() => "diskutil".RunProcess($"mountDisk {path}");
     
     protected override void Dispose(bool disposing)
     {
-        if (isDisposed)
+        if (!disposing || isDisposed)
         {
             return;
         }
 
-        if (disposing)
+        isDisposed = true;
+        try
         {
-            base.Dispose(disposing);
-            Stream?.Close();
-            Stream?.Dispose();
-
+            // dispose the raw stream even when flushing fails.
+            base.Dispose(true);
+        }
+        finally
+        {
             try
             {
-                // use diskutil to mount disk at path
-                "diskutil".RunProcess($"mountDisk {path}");
+                Stream.Dispose();
             }
-            catch (Exception)
+            finally
             {
-                // ignored, if mount disk fails
+                try
+                {
+                    MountDisk();
+                }
+                catch (Exception)
+                {
+                    // mounting can fail for disks without a supported filesystem.
+                }
             }
         }
-
-        isDisposed = true;
     }
 }

@@ -29,7 +29,14 @@ public class MediaStream : Stream
 
     public override void Flush()
     {
-        Stream.Flush();
+        if (Stream is FileStream fileStream && fileStream.CanWrite)
+        {
+            fileStream.Flush(flushToDisk: true);
+        }
+        else
+        {
+            Stream.Flush();
+        }
     }
 
     public override int Read(byte[] buffer, int offset, int count)

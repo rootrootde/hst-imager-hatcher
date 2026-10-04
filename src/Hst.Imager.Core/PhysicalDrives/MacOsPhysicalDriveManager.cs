@@ -81,7 +81,8 @@ namespace Hst.Imager.Core.PhysicalDrives
                 }
 
                 var physicalDrive = new MacOsPhysicalDrive(info.DeviceNode, info.MediaType, info.IoRegistryEntryName,
-                    info.Size, IsRemovable(info.BusProtocol), isSystemDrive, partitionDevices);
+                    info.Size, IsRemovable(info.BusProtocol), isSystemDrive, partitionDevices,
+                    checked((int)info.DeviceBlockSize));
                 physicalDrives.Add(physicalDrive);
                 physicalDriveIndex[disk.DeviceIdentifier] = physicalDrive;
             }

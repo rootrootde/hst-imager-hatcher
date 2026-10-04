@@ -176,7 +176,7 @@
                 var timeElapsed = stopwatch.Elapsed;
                 var timeRemaining = TimeHelper.CalculateTimeRemaining(percentComplete, timeElapsed);
                 var timeTotal = timeElapsed + timeRemaining;
-                var bytesPerSecond = Convert.ToInt64(bytesProcessed / timeElapsed.TotalSeconds);
+                var bytesPerSecond = TimeHelper.CalculateBytesPerSecond(bytesProcessed, timeElapsed);
 
                 sourceOffset += srcBytesRead;
                 destinationOffset += srcBytesRead;
