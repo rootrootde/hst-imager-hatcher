@@ -9,7 +9,7 @@ on:
       version:
         description: 'Fork version (1.7.649-hatcher.N)'
         required: true
-        default: '1.7.649-hatcher.1'
+        default: '1.7.649-hatcher.2'
 
 permissions:
   contents: read
@@ -60,6 +60,22 @@ jobs:
       - name: Package console
         shell: bash
         run: bash src/publish-hatcher-console.sh "$TARGET" "$FORK_VERSION" "$RUNNER_TEMP/release"
+      - name: Check archive checksums
+        shell: bash
+        run: |
+          python3 - "$RUNNER_TEMP/release" <<'PY'
+          import hashlib
+          import pathlib
+          import sys
+
+          root = pathlib.Path(sys.argv[1])
+          for algorithm in ("sha256", "md5"):
+              sidecar = next(root.glob(f"*.{algorithm}"))
+              assert b"\r" not in sidecar.read_bytes(), f"Checksum must use LF: {sidecar}"
+              expected, name = sidecar.read_text(encoding="utf-8").split()
+              with (root / name).open("rb") as stream:
+                  assert hashlib.file_digest(stream, algorithm).hexdigest() == expected
+          PY
       - name: Check packaged console
         shell: bash
         run: |
