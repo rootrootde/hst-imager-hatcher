@@ -11,7 +11,7 @@ This fork carries HST console fixes used by Emu68 Hatcher.
 - Previous release branch: hatcher/macos-raw
 - origin points to the fork; upstream points to the original project.
 
-The next package version is 1.7.649-hatcher.1. The macOS raw-disk patch is
+The next package version is 1.7.649-hatcher.2. The macOS raw-disk patch is
 unchanged from 1.6.616-hatcher.1; upstream still uses block-device I/O.
 The release workflow builds x64 and ARM64 console archives for macOS,
 Windows and Linux from the tagged source.
@@ -247,7 +247,9 @@ An existing release version is rejected. The workflow does not publish it.
 Versions use 1.7.649-hatcher.N, with N starting at 1. The packaging script
 retains upstream's self-contained single-file and ReadyToRun settings,
 the hst.imager executable name (hst.imager.exe on Windows), scripts and license notices. Each archive has
-SHA-256 and MD5 checksum files; MD5 matches Hatcher's current tool downloader.
+SHA-256 and MD5 checksum files with LF line endings on every platform;
+MD5 matches Hatcher's current tool downloader. Native jobs check both digests
+and line endings before uploading artifacts.
 Local archives record the source commit and whether the checkout was modified.
 
 ```sh

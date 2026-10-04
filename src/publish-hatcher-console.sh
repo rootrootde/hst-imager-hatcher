@@ -62,5 +62,7 @@ with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
 for algorithm in ("sha256", "md5"):
     with path.open("rb") as stream:
         digest = hashlib.file_digest(stream, algorithm).hexdigest()
-    path.with_suffix(path.suffix + "." + algorithm).write_text(f"{digest}  {path.name}\n")
+    path.with_suffix(path.suffix + "." + algorithm).write_text(
+        f"{digest}  {path.name}\n", encoding="utf-8", newline="\n"
+    )
 PY
