@@ -135,6 +135,11 @@ namespace Hst.Imager.ConsoleApp
                 Description = "Verify data written."
             };
 
+            var verifyAfterOption = new Option<bool>("--verify-after")
+            {
+                Description = "Verify in a separate pass after writing and flushing, without remounting. Overrides --verify; skipped zero buffers are not compared."
+            };
+
             var forceOption = new Option<bool?>("--force", ["-f"])
             {
                 Description = "Force write to ignore write errors."
@@ -156,6 +161,7 @@ namespace Hst.Imager.ConsoleApp
             writeCommand.Add(sizeOption);
             writeCommand.Add(retriesOption);
             writeCommand.Add(verifyOption);
+            writeCommand.Add(verifyAfterOption);
             writeCommand.Add(forceOption);
             writeCommand.Add(skipUnusedSectorsOption);
             writeCommand.Add(startOption);
@@ -169,7 +175,8 @@ namespace Hst.Imager.ConsoleApp
                 var force = ctx.GetValue(forceOption);
                 var skipUnusedSectors = ctx.GetValue(skipUnusedSectorsOption);
                 var start = ctx.GetValue(startOption);
-                return CommandHandler.Write(source, destination, size, retries, verify, force, skipUnusedSectors, start);
+                return CommandHandler.Write(source, destination, size, retries, verify, force, skipUnusedSectors, start,
+                    ctx.GetValue(verifyAfterOption));
             });
 
             return writeCommand;

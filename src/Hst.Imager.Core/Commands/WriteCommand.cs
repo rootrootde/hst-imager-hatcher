@@ -23,7 +23,8 @@ namespace Hst.Imager.Core.Commands
         bool verify,
         bool force,
         bool skipZeroFilled,
-        long? start)
+        long? start,
+        bool verifyAfter = false)
         : CommandBase
     {
         private readonly ILogger<WriteCommand> logger = logger;
@@ -48,6 +49,10 @@ namespace Hst.Imager.Core.Commands
             // get src media and stream
             using var srcMedia = sourceMediaResult.Value;
             var srcStream = MediaHelper.GetStreamFromMedia(srcMedia);
+            if (verifyAfter && !srcStream.CanSeek)
+            {
+                return new Result(new Error("Post-write verification requires a seekable source; extract the image first"));
+            }
 
             var srcSize = srcMedia.Size;
             OnDebugMessage($"Source size '{srcSize.FormatBytes()}' ({srcSize} bytes)");
@@ -112,7 +117,7 @@ namespace Hst.Imager.Core.Commands
                         $"Source size {writeSize.FormatBytes()} ({writeSize} bytes) is too large for destination size {destSize.FormatBytes()} ({destSize} bytes)"));
             }
 
-            using var streamCopier = new StreamCopier(verify: verify, retries: retries, force: force);
+            using var streamCopier = new StreamCopier(verify: verify && !verifyAfter, retries: retries, force: force);
             streamCopier.DataProcessed += (_, e) =>
             {
                 statusBytesProcessed = e.BytesProcessed;
@@ -139,6 +144,43 @@ namespace Hst.Imager.Core.Commands
 
             OnInformationMessage(
                 $"Written '{statusBytesProcessed.FormatBytes()}' ({statusBytesProcessed} bytes) in {statusTimeElapsed.FormatElapsed()}");
+
+            if (verifyAfter)
+            {
+                token.ThrowIfCancellationRequested();
+                OnInformationMessage("Flushing written data");
+                if (destStream is System.IO.FileStream fileStream)
+                {
+                    fileStream.Flush(flushToDisk: true);
+                }
+                else
+                {
+                    destStream.Flush();
+                }
+                token.ThrowIfCancellationRequested();
+                OnInformationMessage("Verifying written data");
+                using var verifier = new ImageVerifier(retries: retries);
+                verifier.DataProcessed += (_, e) =>
+                {
+                    statusBytesProcessed = e.BytesProcessed;
+                    OnDataProcessed(e.Indeterminate, e.PercentComplete, e.BytesProcessed, e.BytesRemaining,
+                        e.BytesTotal, e.TimeElapsed, e.TimeRemaining, e.TimeTotal, e.BytesPerSecond);
+                };
+                verifier.SrcError += (_, args) => OnSrcError(args);
+                verifier.DestError += (_, args) => OnDestError(args);
+                statusBytesProcessed = 0;
+                var verification = await verifier.Verify(token, srcStream, 0L, destStream,
+                    destStartOffset, writeSize, skipZeroFilled);
+                if (verification.IsFaulted)
+                {
+                    return verification;
+                }
+                if (statusBytesProcessed != writeSize)
+                {
+                    return new Result(new Error("Verification did not cover the written image range"));
+                }
+                OnInformationMessage("Post-write verification complete");
+            }
 
             if (destMedia.IsPhysicalDrive)
             {

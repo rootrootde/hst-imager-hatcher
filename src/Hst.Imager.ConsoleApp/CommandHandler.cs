@@ -343,7 +343,7 @@ namespace Hst.Imager.ConsoleApp
         }
 
         public static async Task Write(string sourcePath, string destinationPath, string size, int? retries, bool? verify,
-            bool? force, bool? skipUnusedSectors, long? start)
+            bool? force, bool? skipUnusedSectors, long? start, bool verifyAfter = false)
         {
             SrcIoErrors.Clear();
             DestIoErrors.Clear();
@@ -355,7 +355,7 @@ namespace Hst.Imager.ConsoleApp
                 verify ?? AppState.Instance.Settings.Verify,
                 force ?? AppState.Instance.Settings.Force,
                 skipUnusedSectors ?? AppState.Instance.Settings.SkipUnusedSectors,
-                start);
+                start, verifyAfter);
             command.SrcError += (_, args) => SrcIoErrors.Add(args.IoError);
             command.DestError += (_, args) => DestIoErrors.Add(args.IoError);
             await Execute(command);

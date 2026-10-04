@@ -359,6 +359,15 @@ Example of writing 4GB vhd image file to Linux physical drive /dev/sdb:
 hst.imager write 4gb.vhd /dev/sdb
 ```
 
+In this fork, `--verify-after` writes the image first, flushes it, then runs a
+separate verification pass without remounting the target. It overrides inline
+`--verify`. The source must support seeking; extract compressed images first
+if the command rejects them. With `--skip-unused-sectors true`, all-zero
+source buffers are neither written nor verified.
+
+For write-only operation, pass `--verify false` and omit `--verify-after`.
+The explicit false overrides any saved verification setting.
+
 ### Format physical drive or image file
 
 Formats physical drive or image file with Master Boot Record, Guid Partition Table, Rigid Disk Block or PiStorm RDB and adds partitions, which are formatted and ready to use. 

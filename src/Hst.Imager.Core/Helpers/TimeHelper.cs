@@ -4,6 +4,13 @@
 
     public static class TimeHelper
     {
+        public static long CalculateBytesPerSecond(long bytesProcessed, TimeSpan timeElapsed)
+        {
+            return timeElapsed > TimeSpan.Zero
+                ? Convert.ToInt64(bytesProcessed / timeElapsed.TotalSeconds)
+                : 0;
+        }
+
         public static TimeSpan CalculateTimeRemaining(double percentComplete, TimeSpan timeElapsed)
         {
             return percentComplete > 0
