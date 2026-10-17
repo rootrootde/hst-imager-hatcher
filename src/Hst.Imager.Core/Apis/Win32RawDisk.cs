@@ -44,6 +44,13 @@
 
         public void Flush()
         {
+            // Media.Dispose closes the stream twice (Close, then Dispose -> Close again);
+            // the second pass arrives after the handle is gone
+            if (disposed || safeFileHandle.IsClosed || safeFileHandle.IsInvalid)
+            {
+                return;
+            }
+
             if (!FlushFileBuffers(safeFileHandle))
             {
                 throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to flush '{path}'");
