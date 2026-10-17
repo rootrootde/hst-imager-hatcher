@@ -11,7 +11,7 @@ This fork carries HST console fixes used by Emu68 Hatcher.
 - Previous release branch: hatcher/macos-raw
 - origin points to the fork; upstream points to the original project.
 
-The next package version is 1.7.649-hatcher.2. The macOS raw-disk patch is
+The next package version is 1.7.649-hatcher.3. hatcher.2 failed every writing command on Windows physical drives: Media.Dispose closes the stream twice, and the fork's FlushFileBuffers ran on the already closed handle (ObjectDisposedException after the work was done). Win32RawDisk.Flush now returns once the handle is closed. The macOS raw-disk patch is
 unchanged from 1.6.616-hatcher.1; upstream still uses block-device I/O.
 The release workflow builds x64 and ARM64 console archives for macOS,
 Windows and Linux from the tagged source.
