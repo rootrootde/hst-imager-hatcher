@@ -6,12 +6,24 @@ This fork carries HST console fixes used by Emu68 Hatcher.
 
 - Upstream: https://github.com/henrikstengaard/hst-imager
 - Fork: https://github.com/rootrootde/hst-imager-hatcher
-- Base: release 1.7.649, commit fb715be98a48f921652f30a843d49b021af45c9b
-- Local update branch: hatcher/1.7.649
-- Previous release branch: hatcher/macos-raw
+- Base: release 2.0.719, commit 4056377d2f62acec1e46cb6afeea6d4f8b723293
+- Local update branch: hatcher/2.0.719
+- Previous release branches: hatcher/1.7.649, hatcher/macos-raw
 - origin points to the fork; upstream points to the original project.
 
-The next package version is 1.7.649-hatcher.3. hatcher.2 failed every writing command on Windows physical drives: Media.Dispose closes the stream twice, and the fork's FlushFileBuffers ran on the already closed handle (ObjectDisposedException after the work was done). Win32RawDisk.Flush now returns once the handle is closed. The macOS raw-disk patch is
+The next package version is 2.0.719-hatcher.1: the 1.7.649-hatcher.3
+patches rebased onto upstream 2.0.719 without conflicts, built with .NET 10.
+Not yet compiled or tested locally; the release workflow is the first build.
+
+Two upstream changes in 2.0.719 affect Windows physical drives. Writable
+drives go through DeferredStartWriteStream, which keeps the first MiB in
+memory and writes it only when the stream is closed. `--verify-after` (and
+upstream's inline verify) therefore compares that range against the buffer,
+not the disk; it reaches the disk at close, followed by FlushFileBuffers.
+After every command, RescanPhysicalDrives now updates disk properties and
+remounts volumes instead of only running a diskpart rescan.
+
+1.7.649-hatcher.2 failed every writing command on Windows physical drives: Media.Dispose closes the stream twice, and the fork's FlushFileBuffers ran on the already closed handle (ObjectDisposedException after the work was done). Win32RawDisk.Flush now returns once the handle is closed. The macOS raw-disk patch is
 unchanged from 1.6.616-hatcher.1; upstream still uses block-device I/O.
 The release workflow builds x64 and ARM64 console archives for macOS,
 Windows and Linux from the tagged source.
@@ -73,7 +85,7 @@ Implementation references: [.NET 8 FileStream I/O](https://github.com/dotnet/run
 
 ## Validation
 
-Run the core and console suites with .NET 8:
+Run the core and console suites with .NET 10:
 
 ```sh
 dotnet test src/Hst.Imager.Core.Tests --configuration Release
@@ -211,6 +223,9 @@ numbers are temporary. Do not launch the GUI for these checks.
    in both paths, including neighboring bytes around metadata changes.
 4. Check cancellation and an I/O failure, closure of the device and remount
    behavior. Report these checks separately from successful write timing.
+5. On Windows (2.0.719 and later), compare the first MiB of the card with the
+   image after reopening, and run a complete Hatcher device build so that the
+   remount after each command does not interfere with the next one.
 
 ## Optional post-write verification
 
@@ -238,13 +253,13 @@ measurements above apply only to interleaved verification.
 
 ## Builds and releases
 
-The **Hatcher console release** workflow runs for 1.7.649-hatcher.*
+The **Hatcher console release** workflow runs for 2.0.719-hatcher.*
 tags or manual dispatch. It runs the core and console tests on native x64
-and ARM64 runners for macOS, Windows and Linux, builds with .NET 8 and
+and ARM64 runners for macOS, Windows and Linux, builds with .NET 10 and
 creates a draft prerelease after all six jobs succeed.
 An existing release version is rejected. The workflow does not publish it.
 
-Versions use 1.7.649-hatcher.N, with N starting at 1. The packaging script
+Versions use 2.0.719-hatcher.N, with N starting at 1. The packaging script
 retains upstream's self-contained single-file and ReadyToRun settings,
 the hst.imager executable name (hst.imager.exe on Windows), scripts and license notices. Each archive has
 SHA-256 and MD5 checksum files with LF line endings on every platform;
@@ -253,8 +268,8 @@ and line endings before uploading artifacts.
 Local archives record the source commit and whether the checkout was modified.
 
 ```sh
-bash src/publish-hatcher-console.sh osx-arm64 1.7.649-hatcher.1 /tmp/hatcher-release
-bash src/publish-hatcher-console.sh osx-x64 1.7.649-hatcher.1 /tmp/hatcher-release
+bash src/publish-hatcher-console.sh osx-arm64 2.0.719-hatcher.1 /tmp/hatcher-release
+bash src/publish-hatcher-console.sh osx-x64 2.0.719-hatcher.1 /tmp/hatcher-release
 # Other runtimes: linux-x64, linux-arm64, win-x64, win-arm64.
 ```
 
@@ -268,7 +283,7 @@ archive checksums in Emu68 Hatcher's
 The release URL pattern is:
 
 ```text
-https://github.com/rootrootde/hst-imager-hatcher/releases/download/1.7.649-hatcher.N/hst-imager_v1.7.649-hatcher.N_console_PLATFORM_ARCH.zip
+https://github.com/rootrootde/hst-imager-hatcher/releases/download/2.0.719-hatcher.N/hst-imager_v2.0.719-hatcher.N_console_PLATFORM_ARCH.zip
 ```
 
 Use the published archive's MD5 for the hash field. The downloader uses its

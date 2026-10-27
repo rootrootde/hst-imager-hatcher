@@ -3,13 +3,13 @@ name: Hatcher console release
 on:
   push:
     tags:
-      - '1.7.649-hatcher.*'
+      - '2.0.719-hatcher.*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Fork version (1.7.649-hatcher.N)'
+        description: 'Fork version (2.0.719-hatcher.N)'
         required: true
-        default: '1.7.649-hatcher.2'
+        default: '2.0.719-hatcher.1'
 
 permissions:
   contents: read
@@ -48,10 +48,10 @@ jobs:
           python-version: '3.12'
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - name: Check fork version
         shell: bash
-        run: '[[ "$FORK_VERSION" =~ ^1\.7\.649-hatcher\.[1-9][0-9]*$ ]]'
+        run: '[[ "$FORK_VERSION" =~ ^2\.0\.719-hatcher\.[1-9][0-9]*$ ]]'
       - name: Test core and console
         shell: bash
         run: |
@@ -118,7 +118,7 @@ jobs:
           cd release
           shasum -a 256 -c ./*.sha256
           cat > "$RUNNER_TEMP/notes.md" <<'NOTES'
-          Console fork based on upstream 1.7.649.
+          Console fork based on upstream 2.0.719.
 
           --verify-after writes first, flushes, then verifies without remounting.
           Skipped zero buffers are not compared. On macOS, disk data uses

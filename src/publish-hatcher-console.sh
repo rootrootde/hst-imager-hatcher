@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# != 3 ]]; then
-    echo "usage: $0 RUNTIME 1.7.649-hatcher.N output-directory" >&2
+    echo "usage: $0 RUNTIME 2.0.719-hatcher.N output-directory" >&2
     exit 1
 fi
 target=$1
@@ -16,8 +16,8 @@ case "$target" in
     win-arm64|win-x64) platform=windows; executable+=.exe; binary+=.exe ;;
     *) echo "unsupported target: $target" >&2; exit 1 ;;
 esac
-if [[ ! "$version" =~ ^1\.7\.649-hatcher\.[1-9][0-9]*$ ]]; then
-    echo "expected fork version 1.7.649-hatcher.N (N > 0)" >&2
+if [[ ! "$version" =~ ^2\.0\.719-hatcher\.[1-9][0-9]*$ ]]; then
+    echo "expected fork version 2.0.719-hatcher.N (N > 0)" >&2
     exit 1
 fi
 
@@ -39,7 +39,7 @@ dotnet publish "$src/Hst.Imager.ConsoleApp/Hst.Imager.ConsoleApp.csproj" \
     -p:PublishSingleFile=true -p:PublishReadyToRun=true \
     -p:IncludeNativeLibrariesForSelfExtract=true \
     -p:Version="$version" -p:PackageVersion="$version" \
-    -p:AssemblyVersion=1.7.649.0 -p:FileVersion=1.7.649.0
+    -p:AssemblyVersion=2.0.719.0 -p:FileVersion=2.0.719.0
 
 mv "$staging/$executable" "$staging/$binary"
 find "$staging" -name '*.pdb' -delete
