@@ -11,7 +11,7 @@ This fork carries HST console fixes used by Emu68 Hatcher.
 - Previous release branches: hatcher/1.7.649, hatcher/macos-raw
 - origin points to the fork; upstream points to the original project.
 
-The next package version is 2.0.719-hatcher.1: the 1.7.649-hatcher.3
+The current package version is 2.0.719-hatcher.1: the 1.7.649-hatcher.3
 patches rebased onto upstream 2.0.719 without conflicts, built with .NET 10.
 The release workflow built and tested it on all six targets. Published
 2026-10-27; Windows and macOS hardware tests with Hatcher passed the same day.
