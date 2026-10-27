@@ -13,7 +13,8 @@ This fork carries HST console fixes used by Emu68 Hatcher.
 
 The next package version is 2.0.719-hatcher.1: the 1.7.649-hatcher.3
 patches rebased onto upstream 2.0.719 without conflicts, built with .NET 10.
-Not yet compiled or tested locally; the release workflow is the first build.
+The release workflow built and tested it on all six targets. Published
+2026-10-27; Windows and macOS hardware tests with Hatcher passed the same day.
 
 Two upstream changes in 2.0.719 affect Windows physical drives. Writable
 drives go through DeferredStartWriteStream, which keeps the first MiB in
